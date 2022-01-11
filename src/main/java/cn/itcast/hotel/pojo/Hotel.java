@@ -3,6 +3,7 @@ package cn.itcast.hotel.pojo;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 @Data
@@ -18,7 +19,15 @@ public class Hotel {
     private String city;
     private String starName;
     private String business;
+    @JsonIgnore
     private String longitude;
+    @JsonIgnore
     private String latitude;
     private String pic;
+    private String location;
+
+    public String getLocation() {
+        return this.longitude + ", " + this.latitude;
+    }
+
 }
