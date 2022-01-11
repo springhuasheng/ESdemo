@@ -20,12 +20,7 @@
     </properties>
 
     <dependencies>
-        <!--
-            elasticsearch
-            尤其是版本不要瞎改 不可以 ES 尽量不要乱改
-            ES的依赖版本和ES的服务器版本是有对应关系的
-            ES不同版本的API其实还是有很大差异的
-        -->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
