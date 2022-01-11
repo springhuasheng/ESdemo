@@ -28,7 +28,7 @@ public class HotelDoc {
         this.city = hotel.getCity();
         this.starName = hotel.getStarName();
         this.business = hotel.getBusiness();
-        this.location = hotel.getLatitude() + ", " + hotel.getLongitude();
+        //this.location = hotel.getLatitude() + ", " + hotel.getLongitude();
         this.pic = hotel.getPic();
     }
 }

@@ -1,5 +1,8 @@
 server:
   port: 8089
+
+# 什么连接池  Druid
+# Springboot中的连接池  Hikari
 spring:
   datasource:
     url: jdbc:mysql:///es
@@ -12,8 +15,10 @@ logging:
     cn.itcast: debug
   pattern:
     dateformat: HH:mm:ss:SSS
+
+# MP的配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-  type-aliases-package: cn.itcast.hotel.pojo
+  type-aliases-package: cn.itcast.hotel.pojo   # 当我们使用了映射配置文件  xml
 

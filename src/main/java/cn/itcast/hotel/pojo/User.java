@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class User {
-    private Long id;
-    private String name;
-    private String address;
+    private Long id;  // long
+    private String name; // keyword
+    private String address; // text
 }
