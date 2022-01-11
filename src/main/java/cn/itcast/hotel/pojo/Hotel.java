@@ -1,6 +1,7 @@
 package cn.itcast.hotel.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,11 +30,13 @@ public class Hotel {
     private String latitude;
 
     private String pic;
+
+    @TableField(exist = false)
     private String location;
 
     //获取Location时将 longitude + ", " + latitude 拼接返回
     public String getLocation() {
-        return this.longitude + ", " + this.latitude;
+        return this.latitude + ", " + this.longitude;
     }
 
 }
