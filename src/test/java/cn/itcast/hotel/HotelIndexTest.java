@@ -47,6 +47,7 @@ class HotelIndexTest {
             for (Hotel hotel : hotels) {
                 // 把这个hotel 插入到ES中
                 client.index(new IndexRequest("hotel")
+                                .id(hotel.getId().toString())
                                 .source(new ObjectMapper().writeValueAsString(hotel), XContentType.JSON)
                         , RequestOptions.DEFAULT);
             }
