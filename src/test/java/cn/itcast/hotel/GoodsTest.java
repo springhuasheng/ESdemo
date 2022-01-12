@@ -90,13 +90,13 @@ public class GoodsTest {
         //创建 映射索引对象
         SearchRequest goods = new SearchRequest("goods");
         //term查询 等值查询
-        goods.source().query(QueryBuilders.termQuery("brandName","三星"));
+        goods.source().query(QueryBuilders.termQuery("brandName", "三星"));
         SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
         for (SearchHit hit : search.getHits().getHits()) {
             //进行对象转化
             ObjectMapper objectMapper = new ObjectMapper();
             Goods goods1 = objectMapper.readValue(hit.getSourceAsString(), Goods.class);
-            System.out.println("term等值 查询品牌为三星: "+goods1);
+            System.out.println("term等值 查询品牌为三星: " + goods1);
         }
     }
 
@@ -108,13 +108,13 @@ public class GoodsTest {
         //创建 映射索引对象
         SearchRequest goods = new SearchRequest("goods");
         //term查询 等值查询
-        goods.source().query(QueryBuilders.matchQuery("title","华为手机"));
+        goods.source().query(QueryBuilders.matchQuery("title", "华为手机"));
         SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
         for (SearchHit hit : search.getHits().getHits()) {
             //进行对象转化
             ObjectMapper objectMapper = new ObjectMapper();
             Goods goods1 = objectMapper.readValue(hit.getSourceAsString(), Goods.class);
-            System.out.println("match分词 查询title为华为手机: "+goods1);
+            System.out.println("match分词 查询title为华为手机: " + goods1);
         }
     }
 
