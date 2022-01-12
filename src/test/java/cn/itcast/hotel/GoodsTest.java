@@ -71,7 +71,7 @@ public class GoodsTest {
             List<Goods> goods = goodsMapper.selectList(null);
             //循环读取
             for (Goods good : goods) {
-                //设置索引
+                //插入ES
                 client.index(new IndexRequest("goods")
                                 //设置 id
                                 .id(good.getId().toString())
