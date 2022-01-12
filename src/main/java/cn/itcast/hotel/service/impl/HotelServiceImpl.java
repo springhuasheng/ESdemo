@@ -79,7 +79,7 @@ public class HotelServiceImpl implements HotelService {
             GeoDistance geoDistance = JSON.parseObject(req.getLocation(), GeoDistance.class);
             hotel.source().query(QueryBuilders.geoDistanceQuery("location").geoDistance(geoDistance));
         }
-        
+
         hotel.source().from((req.getPage() - 1) * req.getSize())
                 .size(req.getSize());
 
