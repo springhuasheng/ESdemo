@@ -34,9 +34,6 @@ public class Hotel {
     @TableField(exist = false)
     private String location;
 
-    //获取Location时将 longitude + ", " + latitude 拼接返回
-    public String getLocation() {
-        return this.latitude + ", " + this.longitude;
-    }
+
 
 }
