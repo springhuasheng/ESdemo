@@ -18,6 +18,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -152,8 +153,8 @@ class Day02HotelIndexTest {
     /**
      * 经纬度范围查询
      * geoDistanceQuery() 对应 纬经度字段 location
-     *   .point() 设置 纬经度
-     *   .distance() 设置 范围大小 10 千米
+     * .point() 设置 纬经度
+     * .distance() 设置 范围大小 10 千米
      */
     @Test
     public void t7() throws IOException {
@@ -167,6 +168,42 @@ class Day02HotelIndexTest {
         SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
         for (SearchHit hit : search.getHits().getHits()) {
             System.out.println("经纬度范围查询" + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * boolQuery()多条件查询
+     * (名称包含如家 并且 价格低于500) 或者 (地址在上海)
+     */
+    @Test
+    public void t8() throws IOException {
+        SearchRequest hotel = new SearchRequest("hotel");
+        hotel.source().query(QueryBuilders
+                .boolQuery()
+                .should(QueryBuilders.termQuery("city", "上海"))
+                .should(QueryBuilders
+                        .boolQuery()
+                        .must(QueryBuilders.matchQuery("name", "如家"))
+                        .must(QueryBuilders.rangeQuery("price").lt(500))));
+        SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("boolQuery()多条件查询" + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 分页查询 + 普通字段排序
+     */
+    @Test
+    public void t9() throws IOException {
+        SearchRequest hotel = new SearchRequest("hotel");
+        hotel.source().query(QueryBuilders.matchAllQuery())
+                .sort("price", SortOrder.DESC)
+                .from(10)  // ( page - 1 ) * pageSize
+                .size(10); //pageSize
+        SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println(hit.getSourceAsMap());
         }
     }
 
