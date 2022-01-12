@@ -80,7 +80,8 @@ public class HotelServiceImpl implements HotelService {
             hotel.source().query(QueryBuilders.geoDistanceQuery("location").geoDistance(geoDistance));
         }
 
-        hotel.source().from((req.getPage() - 1) * req.getSize())
+        hotel.source()
+                .from((req.getPage() - 1) * req.getSize())
                 .size(req.getSize());
 
         //错误示例 传入 null或"" 会报错
@@ -102,11 +103,12 @@ public class HotelServiceImpl implements HotelService {
 //                .sort("price", SortOrder.DESC)
 //                .from((req.getPage() - 1) * req.getSize())
 //                .size(req.getSize());
-
+        //获取 总条数
         SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
         SearchHits hits = search.getHits();
         TotalHits totalHits = hits.getTotalHits();
         Long aLong = totalHits.value;
+        //获取 HotelDoc
         List<HotelDoc> collect = Arrays.stream(search.getHits().getHits()).map(c -> {
             return JSON.parseObject(c.getSourceAsString(), HotelDoc.class);
         }).collect(Collectors.toList());
