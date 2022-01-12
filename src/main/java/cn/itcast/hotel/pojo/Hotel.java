@@ -34,6 +34,9 @@ public class Hotel {
     @TableField(exist = false)
     private String location;
 
+    public String getLocation() {
+        return this.location = this.latitude + ", " + this.longitude;
+    }
 
 
 }

@@ -4,6 +4,7 @@ import cn.itcast.hotel.constants.HotelIndexConstants;
 import cn.itcast.hotel.mapper.HotelMapper;
 import cn.itcast.hotel.pojo.Hotel;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -13,11 +14,20 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.common.lucene.search.function.CombineFunction;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +37,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 class Day02HotelIndexTest {
@@ -207,5 +218,71 @@ class Day02HotelIndexTest {
         }
     }
 
+    /**
+     * 根据当前的地理位置 进行查询( 默认: 由近到远)
+     * geoDistanceSort()
+     */
+    @Test
+    public void t10() throws IOException {
+        SearchRequest hotel = new SearchRequest("hotel");
+        //查询全部
+        hotel.source().query(QueryBuilders.matchAllQuery())
+                //进行地理位置配置
+                .sort(SortBuilders.geoDistanceSort("location", 31.21, 121.5));
+        SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("当前的地理位置 进行查询" + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 进行分词查询 + 为某个字段进行 加分 操作
+     * functionScoreQuery() 功能评分查询
+     */
+    @Test
+    public void t11() throws IOException {
+        SearchRequest hotel = new SearchRequest("hotel");
+        //进行分词查询
+        hotel.source().query(QueryBuilders.functionScoreQuery(QueryBuilders.matchQuery("name", "酒店"),
+                new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{
+                        //设置 某个字段 对评分进行操作
+                        new FunctionScoreQueryBuilder.FilterFunctionBuilder(QueryBuilders.termQuery("brand", "如家"),
+                                //设置为 10分
+                                ScoreFunctionBuilders.weightFactorFunction(10))
+                        //不加 boostMode() 默认为相乘操作
+                        //进行评分 CombineFunction.SUM 累加 初始分数( ES自动生成的分数 匹配度 ) + 上面设置的 10 分
+                }).boostMode(CombineFunction.SUM));
+        SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("分词查询 + 为某个字段进行 加分" + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 字段的高亮替换
+     * name=<em>如家</em>酒店(北京上地安宁庄东路店)
+     */
+    @Test
+    public void t12() throws IOException {
+        SearchRequest hotel = new SearchRequest("hotel");
+        //设置 分词 查询
+        hotel.source().query(QueryBuilders.matchQuery("name", "如家"))
+                //进行 高亮的字段 设置  后面标签随意
+                .highlighter(new HighlightBuilder().field("name").preTags("<em>").postTags("</em>"));
+        SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            //初始数据
+            Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+            //拿到高亮字段
+            Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+            HighlightField name = highlightFields.get("name");
+            //为数组结构
+            Text[] fragments = name.getFragments();
+            //获取到带标签的name
+            String s = fragments[0].toString();
+            sourceAsMap.put("name", s);
+            System.out.println("字段的高亮替换" + sourceAsMap);
+        }
+    }
 
 }
