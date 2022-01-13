@@ -7,8 +7,11 @@ import cn.itcast.hotel.mapper.HotelMapper;
 import cn.itcast.hotel.pojo.Goods;
 import cn.itcast.hotel.pojo.Hotel;
 import cn.itcast.hotel.pojo.User;
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -19,7 +22,13 @@ import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +37,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: huasheng
@@ -118,5 +128,197 @@ public class GoodsTest {
         }
     }
 
+
+    /**
+     * 根据id查询一条文档
+     */
+    @Test
+    public void t5() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.idsQuery().addIds("536563"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("ids 查询: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 根据id删除一条文档
+     */
+    @Test
+    public void t6() throws IOException {
+        DeleteResponse goods = client.delete(new DeleteRequest("goods").id("1369283"), RequestOptions.DEFAULT);
+        System.out.println("删除成功: " + goods);
+    }
+
+    /**
+     * 分页查询所有文档
+     */
+    @Test
+    public void t7() throws IOException {
+        Integer page = 1;
+        Integer pageSize = 1000;
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.matchAllQuery())
+                .from((page - 1) * pageSize)
+                .size(pageSize);
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("分页查询所有文档: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 统计索引中的总条数
+     */
+    @Test
+    public void t8() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.matchAllQuery());
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        Long a = search.getHits().getTotalHits().value;
+        System.out.println("goods 总条数为: " + a);
+    }
+
+    /**
+     * 查询title中包含 荣耀 的文档
+     */
+    @Test
+    public void t9() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.matchQuery("title", "荣耀"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("title+分词查询 荣耀: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询价格大于等于5000 的文档
+     */
+    @Test
+    public void t10() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.rangeQuery("price").gte(5000));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("价格大于等于5000: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询分类是 平板电视  的文档
+     */
+    @Test
+    public void t11() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.termQuery("categoryName", "平板电视"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("分类是 平板电视: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询品牌是  苹果    的文档
+     */
+    @Test
+    public void t12() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.termQuery("brandName", "苹果"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("品牌是 苹果: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询名称中包含手机且价格低于5000的文档
+     */
+    @Test
+    public void t13() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+
+        //暂时 存在问题
+//        goods.source()
+//                .query(QueryBuilders.matchQuery("title", "手机"))
+//                .query(QueryBuilders.rangeQuery("price").lt(5000))
+//                .sort("price", SortOrder.DESC);
+
+        goods.source().query(QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchQuery("title", "手机"))
+                .must(QueryBuilders.rangeQuery("price").lt(5000)))
+                .sort("price", SortOrder.DESC);
+
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("名称中包含手机且价格低于5000: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询名称中包含手机且品牌是苹果的文档
+     */
+    @Test
+    public void t14() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchQuery("title", "手机"))
+                .must(QueryBuilders.termQuery("brandName", "苹果")));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("名称中包含手机且品牌是苹果: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询 名称中包含华为 或 者苹果 且 价格低于8000的文档
+     */
+    @Test
+    public void t15() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders
+                .boolQuery()
+                .must(QueryBuilders.rangeQuery("price").lt(8000))
+                .must(QueryBuilders
+                        .boolQuery()
+                        .should(QueryBuilders.matchQuery("title", "华为"))
+                        .should(QueryBuilders.matchQuery("title", "苹果"))));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("名称中包含华为 或 者苹果 且 价格低于8000的文档" + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 查询 名称中包含苹果且价格低于8000 或者 品牌是苹果且价格大于5000的文档
+     */
+    @Test
+    public void t16() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().query(QueryBuilders
+                .boolQuery()
+                .should(QueryBuilders
+                        .boolQuery()
+                        .must(QueryBuilders.matchQuery("title", "苹果"))
+                        .must(QueryBuilders.rangeQuery("price").lt(8000)))
+                .should(QueryBuilders
+                        .boolQuery()
+                        .must(QueryBuilders.matchQuery("title", "苹果"))
+                        .must(QueryBuilders.rangeQuery("price").gt("5000"))));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        for (SearchHit hit : search.getHits().getHits()) {
+            System.out.println("名称中包含苹果且价格低于8000 或者 品牌是苹果且价格大于5000: " + hit.getSourceAsMap());
+        }
+    }
+
+    /**
+     * 暂时不会
+     * 统计每个分类下的文档数量
+     */
+    @Test
+    public void t17() throws IOException {
+
+    }
 
 }
