@@ -321,4 +321,13 @@ public class GoodsTest {
 
     }
 
+    /**
+     * 暂时不会
+     * 统计品牌是苹果的所有文档的平均价格
+     */
+    @Test
+    public void t18() throws IOException {
+
+    }
+
 }
