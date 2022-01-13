@@ -27,7 +27,10 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.Avg;
 import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -313,12 +316,30 @@ public class GoodsTest {
     }
 
     /**
-     * 暂时不会
      * 统计每个分类下的文档数量
      */
     @Test
     public void t17() throws IOException {
-
+        SearchRequest goods = new SearchRequest("goods");
+        //进行 聚合查询
+        goods.source().aggregation(AggregationBuilders
+                //随意 下面与之对应 即可   可理解为 key
+                .terms("categoryName_agg")
+                //分组的 字段
+                .field("categoryName"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        //进行获取 要和上面对应  上面的 key
+        // 前面的 Terms 需要自己 手动输入
+        Terms categoryNameAgg = search.getAggregations().get("categoryName_agg");
+        //获取集合
+        List<? extends Terms.Bucket> buckets = categoryNameAgg.getBuckets();
+        for (Terms.Bucket bucket : buckets) {
+            //获取 分组的 类型名称
+            String keyAsString = bucket.getKeyAsString();
+            //获取统计的数量
+            long docCount = bucket.getDocCount();
+            System.out.println("分类: " + keyAsString + "-------" + "数量: " + docCount);
+        }
     }
 
     /**
@@ -327,6 +348,26 @@ public class GoodsTest {
      */
     @Test
     public void t18() throws IOException {
+        SearchRequest goods = new SearchRequest("goods");
+        goods.source().aggregation(AggregationBuilders
+                .avg("price_agg")
+                .field("brandName"));
+        SearchResponse search = client.search(goods, RequestOptions.DEFAULT);
+        //进行获取 要和上面对应  上面的 key
+        // 前面的 Terms 需要自己 手动输入
+        Terms categoryNameAgg = search.getAggregations().get("categoryName_agg");
+        Avg categoryName_agg = search.getAggregations().get("categoryName_agg");
+        double value = categoryName_agg.getValue();
+        System.out.println(value);
+//        //获取集合
+//        List<? extends Terms.Bucket> buckets = categoryNameAgg.getBuckets();
+//        for (Terms.Bucket bucket : buckets) {
+//            //获取 分组的 类型名称
+//            String keyAsString = bucket.getKeyAsString();
+//            //获取统计的数量
+//            long docCount = bucket.getDocCount();
+//            System.out.println("分类: " + keyAsString + "-------" + "数量: " + docCount);
+//        }
 
     }
 
