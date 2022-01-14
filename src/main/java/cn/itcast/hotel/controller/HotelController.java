@@ -28,12 +28,4 @@ public class HotelController {
         return pageResult;
     }
 
-    /**
-     * 暂时没有用到
-     */
-//    @PostMapping("/filters")
-//    public PageResult hotelFilters(@RequestBody RequestParams requestParams) {
-//        return new PageResult();
-//    }
-
 }
