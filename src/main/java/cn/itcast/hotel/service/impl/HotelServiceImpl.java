@@ -13,6 +13,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.geo.GeoDistance;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
@@ -40,34 +41,39 @@ public class HotelServiceImpl implements HotelService {
     public PageResult hotelLiset(RequestParams req) throws IOException {
         RestHighLevelClient client = getClient();
         SearchRequest hotel = new SearchRequest("hotel");
+        //进行多条件 拼接
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
         //进行分词查询
         if (!StringUtils.isEmpty(req.getKey())) {
-            hotel.source().query(QueryBuilders
+//            hotel.source().query(QueryBuilders
+//                    .multiMatchQuery(req.getKey(), "name", "brand"));
+            boolQuery.must(QueryBuilders
                     .multiMatchQuery(req.getKey(), "name", "brand"));
         }
         //星级
         if (!StringUtils.isEmpty(req.getStarName())) {
-            hotel.source().query(QueryBuilders
+            boolQuery.must(QueryBuilders
                     .termQuery("starName", req.getStarName()));
         }
         //最低价格
         if (null != req.getMinPrice()) {
-            hotel.source().query(QueryBuilders
+            boolQuery.must(QueryBuilders
                     .rangeQuery("price").gte(req.getMinPrice()));
         }
         //最高价格
         if (null != req.getMaxPrice()) {
-            hotel.source().query(QueryBuilders
+            boolQuery.must(QueryBuilders
                     .rangeQuery("price").lte(req.getMaxPrice()));
         }
         //品牌
         if (!StringUtils.isEmpty(req.getBrand())) {
-            hotel.source().query(QueryBuilders
+            boolQuery.must(QueryBuilders
                     .termQuery("brand", req.getBrand()));
         }
         //地址
         if (!StringUtils.isEmpty(req.getCity())) {
-            hotel.source().query(QueryBuilders
+            boolQuery.must(QueryBuilders
                     .termQuery("city", req.getCity()));
         }
         //排序
@@ -103,6 +109,7 @@ public class HotelServiceImpl implements HotelService {
 //                .sort("price", SortOrder.DESC)
 //                .from((req.getPage() - 1) * req.getSize())
 //                .size(req.getSize());
+
         //获取 总条数
         SearchResponse search = client.search(hotel, RequestOptions.DEFAULT);
         SearchHits hits = search.getHits();
