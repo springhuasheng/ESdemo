@@ -147,7 +147,7 @@ public class HotelServiceImpl implements HotelService {
                 HotelDoc hotelDoc = mapper.readValue(hit.getSourceAsString(), HotelDoc.class);
                 // 获取距离
 //                if (ArrayUtil.isNotEmpty(hit.getSortValues())) {
-                if (null != hit.getSortValues()) {
+                if (null != hit.getSortValues() && hit.getSortValues().length != 0) {
                     hotelDoc.setDistance(hit.getSortValues()[0]);
                 }
                 hotelDocs.add(hotelDoc);
